@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QueryMind - AI Text to SQL Converter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 900px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .input-section {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        textarea, input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus, input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        #userText {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        #databaseSchema {
+            min-height: 100px;
+            resize: vertical;
+            font-family: 'Courier New', monospace;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #clearBtn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .result-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .result-section.show {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .sql-query {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin-bottom: 15px;
+            position: relative;
+            overflow-x: auto;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 15px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .copy-btn:hover {
+            background: #5568d3;
+        }
+
+        .explanation {
+            color: #666;
+            font-style: italic;
+            margin-top: 10px;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #c33;
+        }
+
+        .examples {
+            margin-top: 30px;
+            padding: 20px;
+            background: #e8f4ff;
+            border-radius: 10px;
+        }
+
+        .examples h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .example-item {
+            background: white;
+            padding: 10px 15px;
+            margin: 8px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .example-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 QueryMind</h1>
+        <p class="subtitle">Convert natural language to SQL queries using AI</p>
+
+        <div class="input-section">
+            <label for="userText">What do you want to query? (Natural Language)</label>
+            <textarea id="userText" placeholder="Example: Show me all users who registered in the last 30 days"></textarea>
+        </div>
+
+        <div class="input-section">
+            <label for="databaseSchema">Database Schema (Optional)</label>
+            <textarea id="databaseSchema" placeholder="Example: users (id, name, email, created_at), orders (id, user_id, total, order_date)"></textarea>
+        </div>
+
+        <div class="button-container">
+            <button id="convertBtn">✨ Convert to SQL</button>
+            <button id="clearBtn">🗑️ Clear</button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Generating SQL query...</p>
+        </div>
+
+        <div class="result-section" id="result">
+            <h3>Generated SQL Query:</h3>
+            <div class="sql-query" id="sqlQuery">
+                <button class="copy-btn" onclick="copySql()">📋 Copy</button>
+                <pre id="sqlCode"></pre>
+            </div>
+            <div class="explanation" id="explanation"></div>
+        </div>
+
+        <div class="examples">
+            <h3>💡 Try These Examples:</h3>
+            <div class="example-item" onclick="setExample('Show all users')">
+                📊 Show all users
+            </div>
+            <div class="example-item" onclick="setExample('Get the total number of orders')">
+                🔢 Get the total number of orders
+            </div>
+            <div class="example-item" onclick="setExample('Find all products with price greater than 100')">
+                💰 Find all products with price greater than 100
+            </div>
+            <div class="example-item" onclick="setExample('List customers who made purchases in the last week')">
+                📅 List customers who made purchases in the last week
+            </div>
+            <div class="example-item" onclick="setExample('Show top 10 products by sales')">
+                🏆 Show top 10 products by sales
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8080/api/query';
+
+        document.getElementById('convertBtn').addEventListener('click', convertToSql);
+        document.getElementById('clearBtn').addEventListener('click', clearAll);
+
+        document.getElementById('userText').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                convertToSql();
+            }
+        });
+
+        async function convertToSql() {
+            const text = document.getElementById('userText').value.trim();
+            const schema = document.getElementById('databaseSchema').value.trim();
+
+            if (!text) {
+                alert('Please enter a query in natural language!');
+                return;
+            }
+
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            const convertBtn = document.getElementById('convertBtn');
+
+            loading.classList.add('show');
+            result.classList.remove('show');
+            convertBtn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}/convert`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        databaseSchema: schema || null
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('sqlCode').textContent = data.sqlQuery;
+                    document.getElementById('explanation').textContent = data.explanation;
+                    result.classList.add('show');
+                } else {
+                    showError(data.error || 'Failed to generate query');
+                }
+            } catch (error) {
+                showError('Error connecting to server: ' + error.message);
+            } finally {
+                loading.classList.remove('show');
+                convertBtn.disabled = false;
+            }
+        }
+
+        function showError(message) {
+            const result = document.getElementById('result');
+            result.innerHTML = `<div class="error">❌ ${message}</div>`;
+            result.classList.add('show');
+        }
+
+        function copySql() {
+            const sqlCode = document.getElementById('sqlCode').textContent;
+            navigator.clipboard.writeText(sqlCode).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                const originalText = btn.textContent;
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            });
+        }
+
+        function clearAll() {
+            document.getElementById('userText').value = '';
+            document.getElementById('databaseSchema').value = '';
+            document.getElementById('result').classList.remove('show');
+        }
+
+        function setExample(text) {
+            document.getElementById('userText').value = text;
+            document.getElementById('userText').focus();
+        }
+    </script>
+</body>
+</html>
+
