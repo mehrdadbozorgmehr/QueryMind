@@ -11,3 +11,4 @@ public class QueryMind2Application {
     }
 
 }
+

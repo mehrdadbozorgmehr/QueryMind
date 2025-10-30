@@ -119,6 +119,14 @@
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
         }
 
+        #detectSchemaBtn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        #executeBtn {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
         .result-section {
             margin-top: 30px;
             padding: 20px;
@@ -180,6 +188,73 @@
             border-left: 4px solid #c33;
         }
 
+        .data-table-container {
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .data-table th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .data-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .data-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .row-count {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e8f4ff;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .schema-info {
+            background: #e8f4ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .schema-info.show {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        .schema-info h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .schema-info pre {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            overflow-x: auto;
+        }
+
         .examples {
             margin-top: 30px;
             padding: 20px;
@@ -237,24 +312,31 @@
         <h1>🧠 QueryMind</h1>
         <p class="subtitle">Convert natural language to SQL queries using AI</p>
 
-        <div class="input-section">
-            <label for="userText">What do you want to query? (Natural Language)</label>
-            <textarea id="userText" placeholder="Example: Show me all users who registered in the last 30 days"></textarea>
+        <div class="schema-info" id="schemaInfo">
+            <h4>📊 Detected Database Schema:</h4>
+            <pre id="schemaContent"></pre>
         </div>
 
         <div class="input-section">
-            <label for="databaseSchema">Database Schema (Optional)</label>
-            <textarea id="databaseSchema" placeholder="Example: users (id, name, email, created_at), orders (id, user_id, total, order_date)"></textarea>
+            <label for="userText">What do you want to query? (Natural Language)</label>
+            <textarea id="userText" placeholder="Example: Show me all users who are older than 25"></textarea>
+        </div>
+
+        <div class="input-section">
+            <label for="databaseSchema">Database Schema (Optional - Auto-detected if empty)</label>
+            <textarea id="databaseSchema" placeholder="Leave empty to use auto-detected schema"></textarea>
         </div>
 
         <div class="button-container">
+            <button id="detectSchemaBtn">🔍 Detect Schema</button>
             <button id="convertBtn">✨ Convert to SQL</button>
+            <button id="executeBtn">▶️ Execute Query</button>
             <button id="clearBtn">🗑️ Clear</button>
         </div>
 
         <div class="loading" id="loading">
             <div class="spinner"></div>
-            <p>Generating SQL query...</p>
+            <p>Processing...</p>
         </div>
 
         <div class="result-section" id="result">
@@ -264,6 +346,12 @@
                 <pre id="sqlCode"></pre>
             </div>
             <div class="explanation" id="explanation"></div>
+
+            <div class="data-table-container" id="dataTableContainer" style="display: none;">
+                <h3>Query Results:</h3>
+                <div class="row-count" id="rowCount"></div>
+                <table class="data-table" id="dataTable"></table>
+            </div>
         </div>
 
         <div class="examples">
@@ -277,11 +365,14 @@
             <div class="example-item" onclick="setExample('Find all products with price greater than 100')">
                 💰 Find all products with price greater than 100
             </div>
-            <div class="example-item" onclick="setExample('List customers who made purchases in the last week')">
-                📅 List customers who made purchases in the last week
+            <div class="example-item" onclick="setExample('Show users older than 30')">
+                👥 Show users older than 30
             </div>
-            <div class="example-item" onclick="setExample('Show top 10 products by sales')">
-                🏆 Show top 10 products by sales
+            <div class="example-item" onclick="setExample('List all electronics products')">
+                🖥️ List all electronics products
+            </div>
+            <div class="example-item" onclick="setExample('Show completed orders')">
+                ✅ Show completed orders
             </div>
         </div>
     </div>
@@ -289,7 +380,9 @@
     <script>
         const API_URL = 'http://localhost:8080/api/query';
 
+        document.getElementById('detectSchemaBtn').addEventListener('click', detectSchema);
         document.getElementById('convertBtn').addEventListener('click', convertToSql);
+        document.getElementById('executeBtn').addEventListener('click', executeQuery);
         document.getElementById('clearBtn').addEventListener('click', clearAll);
 
         document.getElementById('userText').addEventListener('keypress', function(e) {
@@ -297,6 +390,37 @@
                 convertToSql();
             }
         });
+
+        // Auto-detect schema on page load
+        window.addEventListener('load', detectSchema);
+
+        async function detectSchema() {
+            const schemaInfo = document.getElementById('schemaInfo');
+            const schemaContent = document.getElementById('schemaContent');
+            const detectBtn = document.getElementById('detectSchemaBtn');
+
+            detectBtn.disabled = true;
+            detectBtn.textContent = '🔄 Detecting...';
+
+            try {
+                const response = await fetch(`${API_URL}/schema`);
+                const data = await response.json();
+
+                if (data.schemaString) {
+                    schemaContent.textContent = data.schemaString;
+                    schemaInfo.classList.add('show');
+                    detectBtn.textContent = `✓ ${data.tableCount} Tables Detected`;
+                } else {
+                    schemaContent.textContent = 'No tables found in database';
+                    schemaInfo.classList.add('show');
+                }
+            } catch (error) {
+                console.error('Error detecting schema:', error);
+                detectBtn.textContent = '🔍 Detect Schema';
+            } finally {
+                detectBtn.disabled = false;
+            }
+        }
 
         async function convertToSql() {
             const text = document.getElementById('userText').value.trim();
@@ -310,9 +434,11 @@
             const loading = document.getElementById('loading');
             const result = document.getElementById('result');
             const convertBtn = document.getElementById('convertBtn');
+            const dataTableContainer = document.getElementById('dataTableContainer');
 
             loading.classList.add('show');
             result.classList.remove('show');
+            dataTableContainer.style.display = 'none';
             convertBtn.disabled = true;
 
             try {
@@ -344,8 +470,96 @@
             }
         }
 
+        async function executeQuery() {
+            const text = document.getElementById('userText').value.trim();
+            const schema = document.getElementById('databaseSchema').value.trim();
+
+            if (!text) {
+                alert('Please enter a query in natural language!');
+                return;
+            }
+
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            const executeBtn = document.getElementById('executeBtn');
+            const dataTableContainer = document.getElementById('dataTableContainer');
+
+            loading.classList.add('show');
+            result.classList.remove('show');
+            executeBtn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}/convert-and-execute`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        databaseSchema: schema || null
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.executed) {
+                    document.getElementById('sqlCode').textContent = data.sqlQuery;
+                    document.getElementById('explanation').textContent = data.explanation;
+
+                    // Display results
+                    displayResults(data.data, data.rowCount);
+                    result.classList.add('show');
+                } else {
+                    showError(data.error || 'Failed to execute query');
+                }
+            } catch (error) {
+                showError('Error connecting to server: ' + error.message);
+            } finally {
+                loading.classList.remove('show');
+                executeBtn.disabled = false;
+            }
+        }
+
+        function displayResults(data, rowCount) {
+            const dataTableContainer = document.getElementById('dataTableContainer');
+            const dataTable = document.getElementById('dataTable');
+            const rowCountDiv = document.getElementById('rowCount');
+
+            if (!data || data.length === 0) {
+                rowCountDiv.textContent = 'No results found';
+                dataTableContainer.style.display = 'block';
+                dataTable.innerHTML = '';
+                return;
+            }
+
+            rowCountDiv.textContent = `📊 ${rowCount} row${rowCount !== 1 ? 's' : ''} returned`;
+
+            // Build table
+            let tableHTML = '<thead><tr>';
+            const columns = Object.keys(data[0]);
+            columns.forEach(col => {
+                tableHTML += `<th>${col}</th>`;
+            });
+            tableHTML += '</tr></thead><tbody>';
+
+            data.forEach(row => {
+                tableHTML += '<tr>';
+                columns.forEach(col => {
+                    const value = row[col] !== null ? row[col] : 'NULL';
+                    tableHTML += `<td>${value}</td>`;
+                });
+                tableHTML += '</tr>';
+            });
+
+            tableHTML += '</tbody>';
+            dataTable.innerHTML = tableHTML;
+            dataTableContainer.style.display = 'block';
+        }
+
         function showError(message) {
             const result = document.getElementById('result');
+            const dataTableContainer = document.getElementById('dataTableContainer');
+            dataTableContainer.style.display = 'none';
             result.innerHTML = `<div class="error">❌ ${message}</div>`;
             result.classList.add('show');
         }
@@ -366,6 +580,7 @@
             document.getElementById('userText').value = '';
             document.getElementById('databaseSchema').value = '';
             document.getElementById('result').classList.remove('show');
+            document.getElementById('dataTableContainer').style.display = 'none';
         }
 
         function setExample(text) {
@@ -375,4 +590,3 @@
     </script>
 </body>
 </html>
-
