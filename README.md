@@ -1,4 +1,4 @@
-# QueryMind2 - AI-Powered Text to SQL Converter
+# QueryMind - AI-Powered Text to SQL Converter
 
 ## Overview
 QueryMind2 is a Spring Boot application that converts natural language text into SQL queries using AI. It makes database querying accessible to everyone, even without SQL knowledge!
