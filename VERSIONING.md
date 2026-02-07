@@ -67,17 +67,14 @@ You might also see these notations:
 
 ## Practical Example: Project Versioning
 
-Here's how Semantic Versioning works in practice, using this project as an example:
-
-- **Current Version:** 0.0.1-SNAPSHOT (as defined in `pom.xml`)
-- **SNAPSHOT suffix:** Indicates a development version (not yet released)
+Here's how Semantic Versioning works in practice:
 
 ### Typical Version History:
 
-- `0.0.1-SNAPSHOT` → Current development version
+- `0.0.1-SNAPSHOT` → Initial development version
 - `0.1.0` → First minor release with basic features
 - `0.1.1` → Bug fix release
-- `0.2.0` → New feature added (AI model support)
+- `0.2.0` → New feature added (e.g., AI model support)
 - `1.0.0` → First stable release with complete API
 - `1.0.1` → Bug fix for stable release
 - `1.1.0` → New feature added to stable version
@@ -107,4 +104,4 @@ You might also see:
 
 ---
 
-For questions about QueryMind versioning, please open an issue in the repository.
+For questions about versioning in this project, please open an issue in the repository.
