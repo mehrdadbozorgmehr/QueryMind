@@ -18,6 +18,8 @@ QueryMind2 is a Spring Boot application that converts natural language text into
 - Lombok
 - REST API
 
+> 📚 **Note:** Not sure what version numbers like "3.5.7" or "7.1.x" mean? Check out our [Versioning Guide](VERSIONING.md) to understand semantic versioning in open source projects!
+
 ## Setup Instructions
 
 ### Prerequisites
@@ -168,6 +170,9 @@ This project is open source and available for educational purposes.
 
 ## Support
 For issues or questions, please create an issue in the repository.
+
+### Additional Resources
+- [Versioning Guide](VERSIONING.md) - Understanding version numbers like "7.1.x" in open source projects
 
 ---
 Made with ❤️ using Spring Boot and OpenAI
