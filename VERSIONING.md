@@ -65,14 +65,14 @@ You might also see these notations:
 | `^7.1.0` | Compatible with 7.1.0 (npm notation: 7.1.0 ≤ version < 8.0.0) |
 | `~7.1.0` | Approximately 7.1.0 (npm notation: 7.1.0 ≤ version < 7.2.0) |
 
-## QueryMind Versioning
+## Practical Example: Project Versioning
 
-This project follows Semantic Versioning:
+Here's how Semantic Versioning works in practice, using this project as an example:
 
 - **Current Version:** 0.0.1-SNAPSHOT (as defined in `pom.xml`)
 - **SNAPSHOT suffix:** Indicates a development version (not yet released)
 
-### Version History Example:
+### Typical Version History:
 
 - `0.0.1-SNAPSHOT` → Current development version
 - `0.1.0` → First minor release with basic features
