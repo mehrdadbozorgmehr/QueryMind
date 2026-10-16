@@ -163,6 +163,10 @@ Provide your database schema for more accurate queries. The AI will use the actu
 - Support for multiple databases (PostgreSQL, MySQL, etc.)
 - Query optimization suggestions
 
+## Versioning
+
+This project follows [Semantic Versioning](https://semver.org/). For detailed information about version numbering and what notations like "7.1.x" mean, please see our [VERSIONING.md](VERSIONING.md) guide.
+
 ## License
 This project is open source and available for educational purposes.
 
